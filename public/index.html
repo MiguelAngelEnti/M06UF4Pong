@@ -72,14 +72,18 @@ let scoreText1, scoreText2;
 
 let players_w=16, players_h=96;
 
-
-
 let ball;
 let ball_x_init=400, ball_y_init=225;
 let ball_x=ball_x_init, ball_y=ball_y_init;
 let ball_w=16, ball_h=16;
 
 let ball_x_dir=1,ball_y_dir=1;
+
+let gameOver = false;
+
+let winScore = 3;
+
+let winner = false;
 
 function preload ()
 {
@@ -96,20 +100,78 @@ function create ()
 	scoreText2 = this.add.text(player2_x, player1_x, "0");
 
 	this.cursors = this.input.keyboard.createCursorKeys();
+	
+	getBallDirection();
+}
+
+function getBallDirection ()
+{
+	let angle = Phaser.Math.Between(-75, 75);
+	
+	if (Math.abs(angle) < 10)
+	{
+		if (angle < 0)
+		{
+			angle -= 10;
+		}
+		else
+		{
+			angle += 10;
+		}
+	}
+	
+	angle = Phaser.Math.DegToRad(angle);
+	
+	ball_x_dir = Math.cos(angle) * (Math.random() < 0.5 ? -1 : 1);
+	ball_y_dir = Math.sin(angle);
 }
 
 function ball_reset ()
 {
 	ball.x = ball_x_init;
 	ball.y = ball_y_init;
-
-	ball_x_dir = -ball_x_dir;
+	
+	getBallDirection();
 }
 
 function update ()
 {
+	if (score1 >= winScore)
+	{
+		gameOver = true;
+		
+		if (player_num == 1)
+		{
+			winner = true;
+		}
+	}
+	else if (score2 >= winScore)
+	{
+		gameOver = true;
+		
+		if (player_num == 2)
+		{
+			winner = true;
+		}
+	}
+	
+		
 	if (player_num == 0)
 	{
+		return;
+	}
+	
+	if (gameOver)
+	{
+		if (winner)
+		{
+			winText = this.add.text(win_w/2, win_h/2, "You win!");
+		}
+		else
+		{
+			winText = this.add.text(win_w/2, win_h/2, "You lose!");
+		}
+		
 		return;
 	}
 	
@@ -132,6 +194,23 @@ function update ()
 		if (ball.y > win_h || ball.y < 0)
 		{
 			ball_y_dir = -ball_y_dir;
+		}
+		
+		if (Phaser.Geom.Intersects.RectangleToRectangle(ball.getBounds(), player1.getBounds()))
+		{
+			
+			if (ball_x_dir < 0)
+			{
+				ball_x_dir = Math.abs(ball_x_dir);
+			}
+		}
+		
+		if (Phaser.Geom.Intersects.RectangleToRectangle(ball.getBounds(), player2.getBounds()))
+		{
+			if (ball_x_dir > 0)
+			{
+				ball_x_dir = -Math.abs(ball_x_dir);
+			}
 		}
 	}
 	if (this.cursors.up.isDown)
@@ -177,6 +256,7 @@ function update ()
 	}
 
 		ws.send( JSON.stringify(player_pos));
+
 
 }
 
